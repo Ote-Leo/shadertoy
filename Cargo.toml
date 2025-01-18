@@ -1,0 +1,12 @@
+[package]
+name = "shader-toy"
+version = "0.1.0"
+edition = "2021"
+
+authors = [ "Ote Leo <ote.leo73@gmail.com>" ]
+
+[dependencies]
+
+anyhow = "1.0.95"
+wgpu = "23.0.1"
+winit = "0.30.8"
