@@ -22,6 +22,10 @@ A `WindowData` struct is passed with every frame.
 
 ## Demo
 
+<p align="center">
+	<img src="./assets/trippy.gif" alt="Trippy Shader"/>
+</p>
+
 ```wgsl
 struct WindowData {
 	resolution: vec2<f32>,
@@ -69,5 +73,3 @@ fn main(@builtin(position) coord: vec4<f32>) -> @location(0) vec4<f32> {
 	return vec4(final_color, 1.0);
 }
 ```
-
-![trippy](./assets/trippy.gif)
