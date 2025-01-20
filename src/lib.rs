@@ -18,6 +18,7 @@ use winit::{
 };
 
 use anyhow::Context;
+use std::io::Write;
 
 const DEFAULT_SHADER_PATH: &str = "shaders/prelude.wgsl";
 
@@ -221,6 +222,31 @@ impl GraphicsBuilder {
 	}
 }
 
+fn display_seconds(duration: u64) -> String {
+	const MINUTE: u64 = 60;
+	const HOUR: u64 = 60 * MINUTE;
+	const DAY: u64 = 24 * HOUR;
+
+	let days = duration / DAY;
+	let hours = duration % DAY / HOUR;
+	let minutes = duration % DAY % HOUR / MINUTE;
+	let seconds = duration % DAY % HOUR % MINUTE;
+
+	let mut tokens = vec![];
+	if days > 0 {
+		tokens.push(format!("{days} d"));
+	}
+	if hours > 0 {
+		tokens.push(format!("{hours} h"));
+	}
+	if minutes > 0 {
+		tokens.push(format!("{minutes} m"));
+	}
+	tokens.push(format!("{seconds} s"));
+
+	return tokens.join(" ")
+}
+
 impl Graphics {
 	fn draw(&mut self) {
 		let frame = self.surface.get_current_texture().unwrap();
@@ -272,6 +298,8 @@ impl Graphics {
 	}
 
 	fn reload_shader(&mut self) -> anyhow::Result<()> {
+		let start = std::time::Instant::now();
+
 		let shader_src = std::fs::read_to_string(DEFAULT_SHADER_PATH)
 			.context("reading vertex prelude shader")?;
 		let shader = self
@@ -281,9 +309,15 @@ impl Graphics {
 				source: wgpu::ShaderSource::Wgsl(shader_src.into()),
 			});
 
+		print!("\x1b[2J\x1b[H");
+		std::io::stdout().flush().context("clearing stdout")?;
+
+		let mut successful_compilation = true;
+
 		block_on(async {
 			let compilation_info = shader.get_compilation_info().await;
 			for msg in compilation_info.messages.iter() {
+				successful_compilation = false;
 				if msg.message_type != wgpu::CompilationMessageType::Info {
 					eprintln!("{}", msg.message);
 				}
@@ -317,6 +351,11 @@ impl Graphics {
 					multiview: None,
 					cache: None,
 				});
+
+		if successful_compilation {
+			let duration = std::time::Instant::now().duration_since(start).as_secs();
+		    println!("reloaded prelude shader successfully in {}", display_seconds(duration));
+		}
 
 		Ok(())
 	}
